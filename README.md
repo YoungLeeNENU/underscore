@@ -8,6 +8,8 @@
                                                                                   \ \____/
                                                                                    \/___/
 
+我正在阅读 underscore.js 的源代码，并在代码中做了一些中文的注释
+
 Underscore.js is a utility-belt library for JavaScript that provides
 support for the usual functional suspects (each, map, reduce, filter...)
 without extending any core JavaScript objects.
@@ -20,5 +22,3 @@ https://github.com/documentcloud
 
 Many thanks to our contributors:
 https://github.com/jashkenas/underscore/contributors
-
-我正在阅读 underscore.js 的源代码，并在代码中做了一些中文的注释
