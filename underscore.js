@@ -59,15 +59,19 @@
 		root._ = _;
 	}
 
-	// 版本号	
+	// 版本号
 	_.VERSION = '1.8.3';
 
-	// Internal function that returns an efficient (for current engines) version
-	// of the passed-in callback, to be repeatedly applied in other Underscore
-	// functions.
+	/**
+	 * 优化的回调，这个高阶函数返回一个函数取执行相应的回调函数
+	 * @param { Function } func 回调
+	 * @param { Mixed } context 上下文
+	 * @param { Number } argCount 参数数量
+	 * @returns { Function } 返回函数，函数执行回调
+	 */
 	var optimizeCb = function(func, context, argCount) {
-		if (context === void 0) return func;
-		switch (argCount == null ? 3 : argCount) {
+		if (context === void 0) return func;    // void 是一元操作符，执行 void 后的表达式后返回 undefined
+		switch (argCount == null ? 3 : argCount) {    // 检测参数个数
 		case 1: return function(value) {
 			return func.call(context, value);
 		};
@@ -82,32 +86,46 @@
 		};
 		}
 		return function() {
-			return func.apply(context, arguments);
+			return func.apply(context, arguments);    // 所有参数全部 apply 到 func 上
 		};
 	};
 
 	// A mostly-internal function to generate callbacks that can be applied
 	// to each element in a collection, returning the desired result — either
 	// identity, an arbitrary callback, a property matcher, or a property accessor.
+	/**
+	 * //TODO: 
+	 * @param {} value
+	 * @param {} context
+	 * @param {} argCount
+	 * @returns {} 
+	 */
 	var cb = function(value, context, argCount) {
-		if (value == null) return _.identity;
-		if (_.isFunction(value)) return optimizeCb(value, context, argCount);
-		if (_.isObject(value)) return _.matcher(value);
-		return _.property(value);
+		if (value == null) return _.identity;    //TODO: identity 是什么？
+		if (_.isFunction(value)) return optimizeCb(value, context, argCount);    // 函数回调
+		if (_.isObject(value)) return _.matcher(value);    //TODO: matcher 是什么？
+		return _.property(value);    //TODO: property 是什么？
 	};
-	_.iteratee = function(value, context) {
+	_.iteratee = function(value, context) {    // iteratee 是作为参数的回调函数
 		return cb(value, context, Infinity);
 	};
 
 	// Similar to ES6's rest param (http://ariya.ofilabs.com/2013/03/es6-and-rest-parameter.html)
 	// This accumulates the arguments passed into an array, after a given index.
+	/** 
+	 * 模拟 ES6 中的可变参数列表 (http://ariya.ofilabs.com/2013/03/es6-and-rest-parameter.html) 
+	 * @param { Function } func 
+	 * @param {} startIndex 
+	 * @returns {} 
+	 */
 	var restArgs = function(func, startIndex) {
-		startIndex = startIndex == null ? func.length - 1 : +startIndex;
+		// 此处用 ==， undefined 能够转义成 null
+		startIndex = startIndex == null ? func.length - 1 : +startIndex;    // func.length 是函数声明中参数个数
 		return function() {
 			var length = Math.max(arguments.length - startIndex, 0);
-			var rest = Array(length);
+			var rest = Array(length);    // 长度为 length，每个元素都是 undefined
 			for (var index = 0; index < length; index++) {
-				rest[index] = arguments[index + startIndex];
+				rest[index] = arguments[index + startIndex];    // 生成可变参数列表 rest
 			}
 			switch (startIndex) {
 			case 0: return func.call(this, rest);
@@ -125,29 +143,35 @@
 
 	// An internal function for creating a new object that inherits from another.
 	var baseCreate = function(prototype) {
-		if (!_.isObject(prototype)) return {};
-		if (nativeCreate) return nativeCreate(prototype);
+		if (!_.isObject(prototype)) return {};    // 查看传入的参数是否是一个对象
+		if (nativeCreate) return nativeCreate(prototype);    // 通过 Object.create 返回一个继承参数的对象
+		// 以下是 Object.create 不支持的情况下的继承
 		Ctor.prototype = prototype;
 		var result = new Ctor;
-		Ctor.prototype = null;
+		Ctor.prototype = null;    // 重置 Ctor 的 prototype
 		return result;
 	};
 
+	/**
+	 * 返回一个取相应对象相应属性的方法
+	 * @param { String } key 需要的属性
+	 * @returns { Function } 取属性的方法
+	 */
 	var property = function(key) {
 		return function(obj) {
 			return obj == null ? void 0 : obj[key];
 		};
 	};
 
-	// Helper for collection methods to determine whether a collection
-	// should be iterated as an array or as an object
-	// Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
+	// 判定一个 collection 应该为数据或对象
+	// 这样能够确定迭代的方式
+	// 参考相关: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
 	// Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
-	var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+	var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;    // 9007199254740991
 	var getLength = property('length');
 	var isArrayLike = function(collection) {
-		var length = getLength(collection);
-		return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
+		var length = getLength(collection);    // 取 collection 对象的 length 属性
+		return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;    // collection.length 是数字且在 [0, 9007199254740991] 内为 Array
 	};
 
 	// Collection Functions
@@ -159,12 +183,12 @@
 	_.each = _.forEach = function(obj, iteratee, context) {
 		iteratee = optimizeCb(iteratee, context);
 		var i, length;
-		if (isArrayLike(obj)) {
+		if (isArrayLike(obj)) {    // obj 是数组
 			for (i = 0, length = obj.length; i < length; i++) {
 				iteratee(obj[i], i, obj);
 			}
-		} else {
-			var keys = _.keys(obj);
+		} else {    // obj 是对象
+			var keys = _.keys(obj);    // Underscore 用的是自己实现的 Object.keys()
 			for (i = 0, length = keys.length; i < length; i++) {
 				iteratee(obj[keys[i]], keys[i], obj);
 			}
